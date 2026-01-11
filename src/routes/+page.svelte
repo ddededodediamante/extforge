@@ -77,19 +77,19 @@
 
   function updateTheme() {
     if (localConfig.dark) {
-      document.body.classList.add('dark')
+      document.body.classList.add("dark");
     } else {
-      document.body.classList.remove('dark')
+      document.body.classList.remove("dark");
     }
   }
 
   Patches.Blockly.ToolboxFlyout(Blockly, config);
   Patches.Blockly.Renderer(Blockly);
   Patches.Blockly.DuplicateDrag(Blockly);
-  
-  import registerBlocks from "../resources/blocks"
-  import registerButtons from "../resources/buttons"
-  registerBlocks()
+
+  import registerBlocks from "../resources/blocks";
+  import registerButtons from "../resources/buttons";
+  registerBlocks();
 
   /** @type {import('blockly').Workspace} */
   let workspace;
@@ -119,7 +119,7 @@
       blockly: projectData,
       properties: properties,
       variables: window.variables || {},
-      blocks: window.blocks || {}
+      blocks: window.blocks || {},
     };
 
     // zip
@@ -127,7 +127,7 @@
     zip.file(
       "README.txt",
       "This file is not meant to be opened!" +
-        "\nBe careful as you can permanently break your extension!",
+        "\nBe careful as you can permanently break your extension!"
     );
 
     // data
@@ -181,30 +181,52 @@
 
     updateTheme();
 
-    workspace.addChangeListener(event => {
-      //Blockly.Events.disableOrphans(event);
+    workspace.addChangeListener((event) => {
+      if (event.isUiEvent) return;
+
       updateGeneratedCode();
     });
 
-    addEventListener('beforeunload', event => {
+    addEventListener("beforeunload", (event) => {
       try {
         if (workspace.getAllBlocks().length > 0) {
           event.preventDefault();
           event.returnValue = true;
         }
       } catch {}
-    })
+    });
 
-    let newconfig = localStorage.getItem('localConfig')
+    let newconfig = localStorage.getItem("localConfig");
     if (newconfig) {
-      localConfig.dark = JSON.parse(newconfig).dark ?? false
-      updateTheme()
+      localConfig.dark = JSON.parse(newconfig).dark ?? false;
+      updateTheme();
     }
 
-    addEventListener('unload', event => {
-      localStorage.setItem('localConfig', JSON.stringify(localConfig))
-    })
+    addEventListener("unload", (event) => {
+      localStorage.setItem("localConfig", JSON.stringify(localConfig));
+    });
+
+    createStinkyBlock(workspace);
   });
+
+  // stinky block to fix Blockly rendering issues
+  function createStinkyBlock(workspace) {
+    Blockly.Events.disable();
+
+    const dummy = workspace.newBlock("text");
+    dummy.initSvg();
+    dummy.render();
+    dummy.getSvgRoot().setAttribute("opacity", "0");
+
+    setTimeout(() => {
+      dummy.dispose(false);
+    });
+
+    Blockly.Events.enable();
+
+    Blockly.svgResize(workspace);
+    workspace.resizeContents();
+  }
 </script>
 
 <head>
@@ -212,10 +234,13 @@
 </head>
 
 <NavigationBar>
-  <NavigationButton icon={NavIconDark} on:click={() => {
-    localConfig.dark = !localConfig.dark;
-    updateTheme()
-  }}></NavigationButton>
+  <NavigationButton
+    icon={NavIconDark}
+    on:click={() => {
+      localConfig.dark = !localConfig.dark;
+      updateTheme();
+    }}
+  ></NavigationButton>
   <NavigationDivider />
   <NavigationButton icon={NavIconSave} on:click={downloadProject}>
     Save
@@ -224,11 +249,16 @@
     Load
   </NavigationButton>
   <NavigationDivider />
-  <NavigationButton icon={NavIconExperiments} on:click={() => openModal("experiments")}>
+  <NavigationButton
+    icon={NavIconExperiments}
+    on:click={() => openModal("experiments")}
+  >
     Experiments
   </NavigationButton>
   <NavigationDivider />
-  <NavigationButton on:click={() => window.open("https://discord.gg/NeYug9v2hq", '_blank')}>
+  <NavigationButton
+    on:click={() => window.open("https://discord.gg/NeYug9v2hq", "_blank")}
+  >
     Discord
   </NavigationButton>
 </NavigationBar>

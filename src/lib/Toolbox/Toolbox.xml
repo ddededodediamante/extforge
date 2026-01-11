@@ -88,6 +88,7 @@
         <sep gap="48"></sep>
         <block type="vector_x" />
         <block type="vector_y" />
+        <block type="vector_add" />
     </category>
     <category name="Inputs" colour="#69d">
         <block type="inputs_keypress" />

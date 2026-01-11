@@ -42,7 +42,7 @@
         previewBlock.initSvg();
         previewBlock.render();
         requestAnimationFrame(() => {
-            workspace.centerOnBlock(previewBlock.id)
+            workspace?.centerOnBlock(previewBlock.id)
         })
 
         //refresh workspace
@@ -73,7 +73,7 @@
         }
 
         addEventListener("resize", ev => {
-            workspace.centerOnBlock(previewBlock.id)
+            workspace?.centerOnBlock(previewBlock.id)
         })
     });
 </script>
@@ -196,9 +196,5 @@
     :is(input, select):only-child {
         width: 100%;
         box-sizing: border-box;
-    }
-
-    .bottom {
-
     }
 </style>

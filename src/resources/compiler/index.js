@@ -1,13 +1,40 @@
 import javascriptGenerator from '../javascriptGenerator';
 import util from '../util';
 
-const start = `
-if (!Scratch.extensions.unsandboxed) {
-    alert("This extension needs to be unsandboxed to run!")
-    return
+const dependenciesMap = {
+    "Broadcasts": ["events_regbroadcast", "events_broadcast", "events_broadcastw"],
+    "Variables": ["variables_"],
+    "Vector": ["vector_"],
+    "Utils": ["strings_amountof", "lists_set", "lists_foreach", "lists_foreachindex", "lists_foreachvalue"],
+};
+
+function getDependencies(workspace) {
+    const allBlocks = workspace.getAllBlocks(false);
+    if (allBlocks.length === 0) return [];
+
+    const used = new Set();
+    for (const block of allBlocks) {
+        for (const [key, prefixes] of Object.entries(dependenciesMap)) {
+            if (prefixes.some(p => block.type.startsWith(p))) {
+                used.add(key);
+            }
+        }
+    }
+    return [...used];
 }
 
-const ExtForge = {
+function generateStart(dependencies) {
+    let parts = [
+        `if (!Scratch.extensions.unsandboxed) {
+    alert("This extension needs to be unsandboxed to run!")
+    return;
+}
+    
+const ExtForge = {${dependencies.length === 0 ? '};' : ''}`,
+    ];
+
+    if (dependencies.includes("Broadcasts")) {
+        parts.push(`
     Broadcasts: new function() {
         this.raw_ = {};
         this.register = (name, blocks) => {
@@ -18,8 +45,11 @@ const ExtForge = {
                 await this.raw_[name]();
             };
         };
-    },
+    },`);
+    }
 
+    if (dependencies.includes("Variables")) {
+        parts.push(`
     Variables: new function() {
         this.raw_ = {};
         this.set = (name, value) => {
@@ -28,8 +58,11 @@ const ExtForge = {
         this.get = (name) => {
             return this.raw_[name] ?? null;
         }
-    },
+    },`);
+    }
 
+    if (dependencies.includes("Vector")) {
+        parts.push(`
     Vector: class {
         constructor(x, y) {
             this.x = x;
@@ -44,14 +77,17 @@ const ExtForge = {
         }
 
         add(v) {
-            return new Vector(this.x + v.x, this.y + v.y);
+            return new ExtForge.Vector(this.x + v.x, this.y + v.y);
         }
 
         set(x, y) {
-            return new Vector(x ?? this.x, y ?? this.y)
+            return new ExtForge.Vector(x ?? this.x, y ?? this.y)
         }
-    },
+    },`);
+    }
 
+    if (dependencies.includes("Utils")) {
+        parts.push(`
     Utils: {
         setList: (list, index, value) => {
             [...list][index] = value;
@@ -65,9 +101,13 @@ const ExtForge = {
         countString: (x, y) => {
             return y.length == 0 ? 0 : x.split(y).length - 1
         }
+    },`);
     }
-}
-`
+
+    if (dependencies.length !== 0) parts.push(`\n};`);
+
+    return parts.join('');
+};
 
 class Compiler {
     /**
@@ -78,6 +118,9 @@ class Compiler {
      */
     compile(workspace, properties) {
         const code = javascriptGenerator.workspaceToCode(workspace);
+
+        const dependencies = getDependencies(workspace);
+        const start = generateStart(dependencies);
 
         const headerCode = [
             `/*`,

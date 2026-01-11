@@ -9,6 +9,7 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": false,
+		"module": "es2015",
 		"moduleResolution": "bundler",
 		"noImplicitAny": false
 	}

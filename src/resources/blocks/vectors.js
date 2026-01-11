@@ -69,6 +69,30 @@ function register() {
         const code = `(${VEC}).y`;
         return code;
     })
+
+    registerBlock(`${categoryPrefix}add`, {
+        message0: '%1 + %2',
+        args0: [
+            {
+                "type": "input_value",
+                "name": "VEC1",
+                "check": "Vector"
+            },
+            {
+                "type": "input_value",
+                "name": "VEC2",
+                "check": "Vector"
+            },
+        ],
+        output: "Vector",
+        inputsInline: true,
+        colour: categoryColor
+    }, (block) => {
+        const VEC1 = javascriptGenerator.valueToCode(block, 'VEC1');
+        const VEC2 = javascriptGenerator.valueToCode(block, 'VEC2');
+        const code = `(${VEC1}).add(${VEC2})`;
+        return code;
+    })
 }
 
 export default register;
